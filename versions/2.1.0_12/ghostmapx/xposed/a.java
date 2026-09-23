@@ -1,0 +1,30 @@
+package com.ghostmapx.xposed;
+
+import a2.l;
+import com.ghostmapx.xposed.hooks.LocationServiceHook;
+import java.util.function.Predicate;
+
+/* JADX INFO: loaded from: classes.dex */
+public final /* synthetic */ class a implements Predicate {
+
+    /* JADX INFO: renamed from: a, reason: collision with root package name */
+    public final /* synthetic */ int f2547a;
+
+    /* JADX INFO: renamed from: b, reason: collision with root package name */
+    public final /* synthetic */ l f2548b;
+
+    public /* synthetic */ a(l lVar, int i3) {
+        this.f2547a = i3;
+        this.f2548b = lVar;
+    }
+
+    @Override // java.util.function.Predicate
+    public final boolean test(Object obj) {
+        switch (this.f2547a) {
+            case 0:
+                return RemoteCommandHandler.handleInstruction$lambda$0(this.f2548b, obj);
+            default:
+                return LocationServiceHook.removeLocationListenerByBinder$lambda$9(this.f2548b, obj);
+        }
+    }
+}
