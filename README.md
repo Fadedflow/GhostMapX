@@ -1,57 +1,87 @@
 # GhostMapX
+https://t.me/GhostMapLsp
 
-Xposed-based location-mock module for Android. This repository holds **source recovered by decompiling the released APKs** after the original source tree was lost, plus the compiled APK artifacts.
+> 🌍 基于 LSPosed 的系统级位置模拟模块 — 无需逐应用配置，全局生效
+>
+> 🌍 A system-level location spoofing module for LSPosed that works globally without per-app configuration.
 
-> ⚠️ **This is recovered/decompiled source, not the original.** Comments, original variable/parameter names, and Gradle build scripts are gone. Class and method structure, resources, and `AndroidManifest.xml` are faithful. Treat it as a reconstruction baseline, not a drop-in original project.
+## 功能特性
+## Features
 
-## Layout
+- **系统级 Hook**：仅注入系统框架（`android`）和位置服务进程，无需对目标应用单独配置
+- **System-level hooks**: Only injects the system framework (`android`) and location service processes, with no need to configure target apps individually.
+- **全局生效**：所有第三方应用均可被模拟，无需逐一添加作用域
+- **Global effect**: Works with all third-party apps without adding scopes one by one.
+- **内置地图界面**：基于 OpenStreetMap 的交互式地图，支持搜索地点和坐标输入
+- **Built-in map UI**: Provides an interactive OpenStreetMap-based map with place search and coordinate input.
+- **实时位置模拟**：一键开启/关闭位置模拟，支持实时切换模拟坐标
+- **Real-time location spoofing**: Lets you enable or disable spoofing with one tap and switch mock coordinates in real time.
+- **防回弹机制**：周期性广播 + 启动即推送，防止位置被系统组件覆盖为真实坐标
+- **Anti-rebound mechanism**: Uses periodic broadcasts plus startup-time pushes to prevent system components from restoring the real location.
 
-```
-apks/                     Compiled release APKs (all 4 versions)
-recovered-src/
-  com/ghostmapx/          PRIMARY recovered source (from v2.2.0 build 17 — most complete Java)
-  AndroidManifest.xml     v2.2.0 manifest
-  _from_2.3.2_native/     v2.3.2 additions (see "Native migration" below)
-    ...ghostmapx classes
-    security/NativeGuard.java
-    lib/arm64-v8a/libghostguard.so   native lib (binary; source NOT recoverable)
-    AndroidManifest.xml
-versions/                 Per-version reference: each version's com/ghostmapx + manifest only
-  2.1.0_12/  2.1.2_14/  2.2.0_17/  2.3.2_25/
-```
+## 作用域
+## Scope
 
-## Versions
+模块仅需以下系统进程：
 
-| Version | Build | Your classes (com.ghostmapx) | Notes |
-|---|---|---|---|
-| 2.1.0 | 12 | 27 | Full Java logic |
-| 2.1.2 | 14 | 27 | Full Java logic |
-| **2.2.0** | **17** | **28** | **Most complete — use as recovery base** |
-| 2.3.2 | 25 | 6 | Core logic migrated to native (see below) |
+Only the following system processes need to be selected for this module:
 
-## Native migration (v2.3.2)
+| 进程 | 说明 |
+|---|---|
+| `android` | 系统框架（核心 Hook） |
+| `com.ghostmapx.app` | 本应用（模块激活检测） |
+| `com.android.phone` | 电话服务（基站定位） |
+| `com.android.location.fused` | AOSP 融合定位 |
+| `com.oplus.location` | OPPO/一加融合定位 |
+| `com.xiaomi.location.fused` | 小米融合定位 |
+| `com.android.bluetooth` | 蓝牙服务（BLE 定位） |
 
-Starting at v2.3.2 the app moved most logic into a native library
-(`lib/arm64-v8a/libghostguard.so`) fronted by `com.ghostmapx.security.NativeGuard`.
-**The C/C++ source for that `.so` cannot be recovered by decompilation** — only
-the compiled binary survives (disassembly only). The Java layer in 2.3.2 shrank to
-6 classes as a result. To fully restore 2.3.2 behaviour you must rewrite the native
-portion from memory or reverse the `.so` at the assembly level.
+| Process | Description |
+|---|---|
+| `android` | System framework (core hook target) |
+| `com.ghostmapx.app` | This app (module activation detection) |
+| `com.android.phone` | Phone service (cell tower location) |
+| `com.android.location.fused` | AOSP fused location |
+| `com.oplus.location` | OPPO/OnePlus fused location |
+| `com.xiaomi.location.fused` | Xiaomi fused location |
+| `com.android.bluetooth` | Bluetooth service (BLE location) |
 
-## Recovery toolchain
+## 使用方法
+## Usage
 
-Recovered with [jadx](https://github.com/skylot/jadx) built from source on a host
-that could not reach github.com (releases/download blocked). Build notes:
+1. 在 LSPosed 中启用 GhostMapX 模块
+2. 勾选上述作用域
+3. 重启手机
+4. 打开 GhostMapX，在地图上选择目标位置
+5. 点击按钮开始模拟
 
-- JDK 17 (Azul Zulu portable) — Adoptium download stalled, used Azul CDN.
-- Gradle 9.7.1 from Tencent Cloud mirror (official SHA-256 verified), wrapper pointed at the local zip.
-- Maven Central reachable; jadx `BUILD SUCCESSFUL`, run-verified.
+1. Enable the GhostMapX module in LSPosed.
+2. Select the scopes listed above.
+3. Reboot your device.
+4. Open GhostMapX and choose the target location on the map.
+5. Tap the button to start spoofing.
 
-## Application
+## 兼容性
+## Compatibility
 
-`com.ghostmapx.app` — Xposed module (`MainActivity`, `GhostMapApp`) with a WebView-based UI in 2.3.2.
+- Android 8.1+ (API 26+)
+- Android 8.1+ (API 26+)
+- 需要 LSPosed / LSPosed-IT 框架
+- Requires the LSPosed / LSPosed-IT framework.
+- 支持 KernelSU / Magisk + Zygisk
+- Supports KernelSU / Magisk + Zygisk.
 
-Hook layer (`com.ghostmapx.xposed`):
-- `GhostLocationHook`, `LocationInjector`, `RemoteCommandHandler`
-- `hooks/`: `FusedLocationHook`, `GnssHook`, `LocationManagerHook`, `LocationProviderManagerHook`, `LocationServiceHook`, `BasicLocationHook`, `ThirdPartyLocationHook`, `AntiDetectionHook`, `BleHook`, `WlanHook`, `TelephonyHook`, `SensorHook`, `blindhook/*`
-- `utils/`: `FakeLoc`, `BinderUtils`, `Logger`
+## 作者
+## Author
+
+**Hakunmata / 草莓味の椰浆w**
+
+本模块仅供学习研究使用。
+
+This module is intended for learning and research purposes only.
+
+---
+
+> ℹ️ 本仓库当前内容为**从已发布 APK 反编译恢复的源码**（原始源码丢失）。恢复说明与工具链见 [`RECOVERY.md`](RECOVERY.md)。
+>
+> ℹ️ This repository currently holds **source recovered by decompiling the released APKs** (the original source was lost). See [`RECOVERY.md`](RECOVERY.md) for recovery notes and toolchain.
