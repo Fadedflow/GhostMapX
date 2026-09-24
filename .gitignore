@@ -8,3 +8,7 @@ local.properties
 # OS
 Thumbs.db
 .DS_Store
+
+# Signing keys (never commit)
+*.keystore
+*.jks
