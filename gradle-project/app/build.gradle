@@ -1,0 +1,37 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.ghostmapx.app'
+    compileSdk 35
+    buildToolsVersion "35.0.0"
+
+    defaultConfig {
+        applicationId "com.ghostmapx.app"
+        minSdk 26
+        targetSdk 35
+        versionCode 17
+        versionName "2.2.0"
+    }
+
+    buildTypes {
+        debug {}
+        release {
+            minifyEnabled false
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    // All obfuscated third-party classes (I0.*, Q1.*, a2.*, p011f.*, shaded Kotlin, etc.)
+    // recovered from the baseline APK's classes.dex via dex2jar (com/ghostmapx/** stripped).
+    implementation files('libs/applibs.jar')
+    // Xposed API is provided at runtime by the LSPosed framework; not present in applibs.jar.
+    compileOnly 'de.robv.android.xposed:api:82'
+}
