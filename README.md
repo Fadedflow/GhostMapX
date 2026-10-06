@@ -77,3 +77,95 @@ This module is intended for learning and research purposes only.
 ---
 
 > ℹ️ 本仓库当前内容为**从已发布 APK 反编译恢复的源码
+
+---
+
+## 后端恢复指南
+## Backend Restoration Guide
+
+原版后端已下线。本仓库提供自建后端的完整方案：`backend/server.js` + `smali-project/` 中的 App 端补丁。
+
+The original backend is offline. This repo provides a complete self-hosted replacement: `backend/server.js` plus the app-side patches in `smali-project/`.
+
+### 原理
+### How It Works
+
+App 启动时向后端请求授权 token，后端用 HMAC-SHA256 签发。App 验证签名后解锁功能，并定期调用 `/validate` 复查。公告、讨论群内容也从后端拉取。
+
+On launch the app requests a license token from the backend, which signs it with HMAC-SHA256. The app verifies the signature to unlock features and periodically re-checks via `/validate`. Announcements and group info are also fetched from the backend.
+
+接口契约（App 端 `n0/b`、`n0/e` 期望的）：
+API contract (expected by the app's `n0/b`, `n0/e`):
+
+| 接口 Endpoint | 说明 Description |
+|---|---|
+| `GET /` | 返回 `{"t":token,"e":expiryEpochSec,"s":hmacHex}`，其中 `s = hex(HMAC_SHA256(secret, t + "\|" + e))` |
+| `GET /validate` | `Authorization: Bearer <token>` 有效则返回 200 |
+| `GET /notice.html` | 公告文本，显示在"公告"弹窗 |
+| `GET /taolunzu.html` | 讨论群信息，显示在"讨论群"弹窗 |
+
+### 1. 部署后端
+### 1. Deploy the Backend
+
+```bash
+cd backend
+# 设置 HMAC 密钥（自己生成一个随机字符串，妥善保管）
+# Set the HMAC secret (generate your own random string, keep it safe)
+export GHOSTMAPX_HMAC_SECRET="<your-random-secret>"
+export PORT=8090
+# 可选：自定义公告和讨论群内容
+# Optional: custom announcement and group info
+export NOTICE_TEXT="你的公告内容"
+export TAOLUNZU_TEXT="你的讨论群信息"
+node server.js
+```
+
+要求：Node.js（无第三方依赖，仅用内置 `http`/`crypto`）。服务器需能被手机直接访问（公网 IP 或内网穿透），App 使用明文 HTTP。
+
+Requirements: Node.js (no third-party deps, only built-in `http`/`crypto`). The server must be reachable from the phone (public IP or tunnel); the app uses plain HTTP.
+
+### 2. 配置 App 端
+### 2. Configure the App
+
+`smali-project/smali/n0/b.smali` 中的 `a([B)` 方法按 blob 身份硬编码返回明文（绕过原版的 AES 解密，因为重签名会改变密钥派生）。把占位符换成你的真实值：
+
+In `smali-project/smali/n0/b.smali`, the `a([B)` method returns plaintext by blob identity (bypassing the original AES decryption, which breaks after re-signing). Replace the placeholders with your real values:
+
+| 占位符 Placeholder | 换成 Replace with |
+|---|---|
+| `https://YOUR_BACKEND_HOST/` | 你的后端地址，如 `http://1.2.3.4:8090/`（注意末尾 `/`） |
+| `https://YOUR_BACKEND_HOST` | 同上，不带末尾 `/`（搜索基址） |
+| `YOUR_HMAC_SECRET` | 与服务器 `GHOSTMAPX_HMAC_SECRET` 完全一致的密钥 |
+
+### 3. 打包签名
+### 3. Build & Sign
+
+```bash
+apktool b smali-project -o GhostMapX.apk
+zipalign -f 4 GhostMapX.apk GhostMapX-aligned.apk
+apksigner sign --ks your.keystore --out GhostMapX-final.apk GhostMapX-aligned.apk
+```
+
+注意：必须用你自己的 keystore 签名；换签名后必须按第 2 步硬编码（或按新证书重加密 blob），否则 App 解密失败无法连接后端。
+
+Note: sign with your own keystore. After re-signing you must use the hardcode in step 2 (or re-encrypt the blobs for the new cert), otherwise decryption fails and the app can't reach the backend.
+
+### 4. 验证
+### 4. Verify
+
+```bash
+# 手机能访问后端
+curl http://YOUR_HOST:8090/
+# 应返回 {"t":"...","e":...,"s":"..."}
+# 用返回的 token 调 /validate 应返回 200
+curl -H "Authorization: Bearer <t>" http://YOUR_HOST:8090/validate
+```
+
+### 常见坑
+### Troubleshooting
+
+- **App 显示"网络错误"/连不上**：检查 `usesCleartextTraffic="true"` 是否在 manifest；确认 `n0/e.smali` 和 `n0/b.smali` 中的 `HttpsURLConnection` 已改为 `HttpURLConnection`（本仓库的 smali 已改好）。
+- **授权失败**：App 端 `YOUR_HMAC_SECRET` 与服务器 `GHOSTMAPX_HMAC_SECRET` 不一致，或 token 已过期。
+- **地图空白**：`smali-project` 默认用高德瓦片（国内可访问）；`u2/e.smali` 的 `d(J)` 可按需换回其他瓦片源。
+- **坐标偏移**：`w2/d.smali` 已内置 WGS-84→GCJ-02 转换（`com/ghostmapx/utils/Gcj.smali`），如不需要可移除。
+- **安装失败**：签名与旧版本不同，需先卸载旧 App 再安装。
