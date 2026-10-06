@@ -1,5 +1,4 @@
 # GhostMapX
-https://t.me/GhostMapLsp
 
 > 🌍 基于 LSPosed 的系统级位置模拟模块 — 无需逐应用配置，全局生效
 >
@@ -71,17 +70,10 @@ Only the following system processes need to be selected for this module:
 - 支持 KernelSU / Magisk + Zygisk
 - Supports KernelSU / Magisk + Zygisk.
 
-## 作者
-## Author
-
-**Hakunmata / 草莓味の椰浆w**
-
 本模块仅供学习研究使用。
 
 This module is intended for learning and research purposes only.
 
 ---
 
-> ℹ️ 本仓库当前内容为**从已发布 APK 反编译恢复的源码**（原始源码丢失）。恢复说明与工具链见 [`RECOVERY.md`](RECOVERY.md)。
->
-> ℹ️ This repository currently holds **source recovered by decompiling the released APKs** (the original source was lost). See [`RECOVERY.md`](RECOVERY.md) for recovery notes and toolchain.
+> ℹ️ 本仓库当前内容为**从已发布 APK 反编译恢复的源码
