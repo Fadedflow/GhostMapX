@@ -1,0 +1,5 @@
+// Top-level build file for the GhostMapX recovered-source project.
+// Recovered from com.ghostmapx.app v2.2.0 (build 17) via jadx; see RECOVERY.md in the source repo.
+plugins {
+    id 'com.android.application' version '8.5.2' apply false
+}
